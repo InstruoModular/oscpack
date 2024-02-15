@@ -25,12 +25,12 @@
 */
 
 /*
-	The text above constitutes the entire oscpack license; however, 
+	The text above constitutes the entire oscpack license; however,
 	the oscpack developer(s) also make the following non-binding requests:
 
 	Any person wishing to distribute modifications to the Software is
 	requested to send the modifications to the original developer so that
-	they can be incorporated into the canonical version. It is also 
+	they can be incorporated into the canonical version. It is also
 	requested that these non-binding requests be included whenever the
 	above license is reproduced.
 */
@@ -64,19 +64,19 @@ static inline const char* FindStr4End( const char *p )
 // returns 0 if p == end or if the string is unterminated
 static inline const char* FindStr4End( const char *p, const char *end )
 {
-    if( p >= end )
+    if (p >= end)
         return 0;
 
-	if( p[0] == '\0' )    // special case for SuperCollider integer address pattern
-		return p + 4;
+    if (p[0] == '\0') // special case for SuperCollider integer address pattern
+        return p + 4;
 
     p += 3;
     end -= 1;
 
-    while( p < end && *p )
+    while (p < end && *p)
         p += 4;
 
-    if( *p )
+    if (*p)
         return 0;
     else
         return p + 1;
@@ -84,7 +84,7 @@ static inline const char* FindStr4End( const char *p, const char *end )
 
 
 // round up to the next highest multiple of 4. unless x is already a multiple of 4
-static inline uint32 RoundUp4( uint32 x ) 
+static inline uint32 RoundUp4( uint32 x )
 {
     return (x + 3) & ~((uint32)0x03);
 }
@@ -488,23 +488,23 @@ void ReceivedMessageArgumentIterator::Advance()
 {
     if( !value_.typeTagPtr_ )
         return;
-        
+
     switch( *value_.typeTagPtr_++ ){
         case '\0':
             // don't advance past end
             --value_.typeTagPtr_;
             break;
-            
+
         case TRUE_TYPE_TAG:
         case FALSE_TYPE_TAG:
         case NIL_TYPE_TAG:
         case INFINITUM_TYPE_TAG:
-        
+
             // zero length
             break;
 
         case INT32_TYPE_TAG:
-        case FLOAT_TYPE_TAG: 					
+        case FLOAT_TYPE_TAG:
         case CHAR_TYPE_TAG:
         case RGBA_COLOR_TYPE_TAG:
         case MIDI_MESSAGE_TYPE_TAG:
@@ -515,17 +515,17 @@ void ReceivedMessageArgumentIterator::Advance()
         case INT64_TYPE_TAG:
         case TIME_TAG_TYPE_TAG:
         case DOUBLE_TYPE_TAG:
-				
+
             value_.argumentPtr_ += 8;
             break;
 
-        case STRING_TYPE_TAG: 
+        case STRING_TYPE_TAG:
         case SYMBOL_TYPE_TAG:
 
             // we use the unsafe function FindStr4End(char*) here because all of
             // the arguments have already been validated in
             // ReceivedMessage::Init() below.
-            
+
             value_.argumentPtr_ = FindStr4End( value_.argumentPtr_ );
             break;
 
@@ -538,7 +538,7 @@ void ReceivedMessageArgumentIterator::Advance()
             break;
 
         case ARRAY_BEGIN_TYPE_TAG:
-        case ARRAY_END_TYPE_TAG: 
+        case ARRAY_END_TYPE_TAG:
 
             //    [ Indicates the beginning of an array. The tags following are for
             //        data in the Array until a close brace tag is reached.
@@ -606,7 +606,7 @@ void ReceivedMessage::Init( const char *message, osc_bundle_element_size_t size 
         typeTagsBegin_ = 0;
         typeTagsEnd_ = 0;
         arguments_ = 0;
-            
+
     }else{
         if( *typeTagsBegin_ != ',' )
             throw MalformedMessageException( "type tags not present" );
@@ -619,18 +619,18 @@ void ReceivedMessage::Init( const char *message, osc_bundle_element_size_t size 
 
         }else{
             // check that all arguments are present and well formed
-                
+
             arguments_ = FindStr4End( typeTagsBegin_, end );
             if( arguments_ == 0 ){
                 throw MalformedMessageException( "type tags were not terminated before end of message" );
             }
 
             ++typeTagsBegin_; // advance past initial ','
-            
+
             const char *typeTag = typeTagsBegin_;
             const char *argument = arguments_;
             unsigned int arrayLevel = 0;
-                        
+
             do{
                 switch( *typeTag ){
                     case TRUE_TYPE_TAG:
@@ -677,9 +677,9 @@ void ReceivedMessage::Init( const char *message, osc_bundle_element_size_t size 
                             throw MalformedMessageException( "arguments exceed message size" );
                         break;
 
-                    case STRING_TYPE_TAG: 
+                    case STRING_TYPE_TAG:
                     case SYMBOL_TYPE_TAG:
-                    
+
                         if( argument == end )
                             throw MalformedMessageException( "arguments exceed message size" );
                         argument = FindStr4End( argument, end );
@@ -691,7 +691,7 @@ void ReceivedMessage::Init( const char *message, osc_bundle_element_size_t size 
                         {
                             if( argument + osc::OSC_SIZEOF_INT32 > end )
                                 MalformedMessageException( "arguments exceed message size" );
-                                
+
                             // treat blob size as an unsigned int for the purposes of this calculation
                             uint32 blobSize = ToUInt32( argument );
                             argument = argument + osc::OSC_SIZEOF_INT32 + RoundUp4( blobSize );
@@ -699,7 +699,7 @@ void ReceivedMessage::Init( const char *message, osc_bundle_element_size_t size 
                                 MalformedMessageException( "arguments exceed message size" );
                         }
                         break;
-                        
+
                     default:
                         throw MalformedMessageException( "unknown type tag" );
                 }
@@ -757,14 +757,14 @@ void ReceivedBundle::Init( const char *bundle, osc_bundle_element_size_t size )
         || bundle[5] != 'l'
         || bundle[6] != 'e'
         || bundle[7] != '\0' )
-            throw MalformedBundleException( "bad bundle address pattern" );    
+            throw MalformedBundleException( "bad bundle address pattern" );
 
     end_ = bundle + size;
 
     timeTag_ = bundle + 8;
 
     const char *p = timeTag_ + 8;
-        
+
     while( p < end_ ){
         if( p + osc::OSC_SIZEOF_INT32 > end_ )
             throw MalformedBundleException( "packet too short for elementSize" );
